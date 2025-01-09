@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Drawer,
   Typography,
@@ -6,40 +6,63 @@ import {
   TextField,
   Button,
   IconButton,
-  Tooltip,
 } from "@mui/material";
-import CloseIcon from "@mui/icons-material/Close";
-import EditIcon from "@mui/icons-material/Edit";
-import CropIcon from "@mui/icons-material/Crop";
-import RefreshIcon from "@mui/icons-material/Refresh";
-import FlipIcon from "@mui/icons-material/Flip";
-import FindReplaceIcon from "@mui/icons-material/FindReplace";
+import { Close as CloseIcon, Edit as EditIcon } from "@mui/icons-material";
+import EditIcons from "./EditIcons";
+import Cropper from "react-easy-crop";
 
-const ImageDrawer = ({
-  uploadedImage,
-  uploadedImageTitle,
-  drawerOpen,
-  onClose,
-}) => {
+const ImageDrawer = ({ uploadedImage, uploadedImageTitle, drawerOpen, onClose }) => {
   const [assetTitle, setAssetTitle] = useState(uploadedImageTitle || "");
   const [isEditMode, setIsEditMode] = useState(false);
+  const [crop, setCrop] = useState({ x: 0, y: 0 });
+  const [zoom, setZoom] = useState(1);
+  const [isCropping, setIsCropping] = useState(false);
+  const [imageSrc, setImageSrc] = useState(uploadedImage); 
   const [rotation, setRotation] = useState(0);
-  const [flippedHorizontally, setFlippedHorizontally] = useState(false);
-  const [flippedVertically, setFlippedVertically] = useState(false);
-  const [croppedImage, setCroppedImage] = useState(null);
+  const [flipHorizontal, setFlipHorizontal] = useState(false); 
+  const [flipVertical, setFlipVertical] = useState(false); 
 
-  //useEffect to each tile set the tile when new image gets uploaded
+  //useEffect when the title of the image changes to set the new title
   useEffect(() => {
     setAssetTitle(uploadedImageTitle);
   }, [uploadedImageTitle]);
 
-  //functions to flip the edit icon
-  const handleEditClick = () => {
-    setIsEditMode(true); 
+  // when the image changes to set the new image
+  useEffect(() => {
+    setImageSrc(uploadedImage);
+  }, [uploadedImage]);
+
+  //function runs when user clicks on edit icon
+  const handleEditClick = () => setIsEditMode(true);
+
+  //flip the icons after clicking on close button
+  const handleCloseEditIcons = () => {
+    setIsCropping(false);
+    setIsEditMode(false);
   };
 
-  const handleCloseEditIcons = () => {
-    setIsEditMode(false); 
+  //function to crop the image
+  const handleCropImage = async () => {
+    
+  };
+
+  const handleRotate = () => {
+    setRotation((prevRotation) => prevRotation + 90); 
+  };
+
+  //function to flip the image horizontaly
+  const handleFlipHorizontal = () => {
+    setFlipHorizontal(!flipHorizontal); 
+  };
+
+  //function to flip image vertically
+  const handleFlipVertical = () => {
+    setFlipVertical(!flipVertical); 
+  };
+
+  //function to replace image
+  const handleReplace = () => {
+    // document.getElementById('fileInput').click();
   };
 
   return (
@@ -55,6 +78,7 @@ const ImageDrawer = ({
         },
       }}
     >
+      {/* Header */}
       <Box
         sx={{
           display: "flex",
@@ -78,7 +102,7 @@ const ImageDrawer = ({
           gap: "16px",
         }}
       >
-        {uploadedImage && (
+        {imageSrc && (
           <Box
             sx={{
               flex: "1",
@@ -90,16 +114,30 @@ const ImageDrawer = ({
               border: "1px solid #ccc",
             }}
           >
-            <img
-              src={uploadedImage}
-              alt="Selected"
-              style={{
-                width: "100%",
-                height: "100%",
-                objectFit: "contain",
-              }}
-            />
-            {/* Conditionally render the Edit icon or the group of icons */}
+            {!isCropping ? (
+              <img
+                src={imageSrc}
+                alt="Selected"
+                style={{
+                  width: "100%",
+                  height: "100%",
+                  objectFit: "contain",
+                  transform: `${flipHorizontal ? "scaleX(-1)" : ""} ${flipVertical ? "scaleY(-1)" : ""} rotate(${rotation}deg)`,
+                }}
+              />
+            ) : (
+              <Cropper
+                image={imageSrc}
+                crop={crop}
+                zoom={zoom}
+                rotation={rotation}
+                aspect={1}
+                onCropChange={setCrop}
+                onZoomChange={setZoom}
+              />
+            )}
+
+            {/* Toggle Edit Icon or other Icons */}
             {!isEditMode ? (
               <IconButton
                 onClick={handleEditClick}
@@ -118,59 +156,17 @@ const ImageDrawer = ({
                 <EditIcon />
               </IconButton>
             ) : (
-              <Box
-                sx={{
-                  position: "absolute",
-                  top: "8px",
-                  right: "8px",
-                  display: "flex",
-                  flexDirection: "column",
-                  backgroundColor: "rgba(0, 0, 0, 0.7)",
-                  padding: "5px",
-                  borderRadius: "8px",
-                  gap: "5px",
-                }}
-              >
-                <Tooltip title="Close" placement="left">
-                  <IconButton
-                    onClick={handleCloseEditIcons}
-                    sx={{ color: "white" }}
-                  >
-                    <CloseIcon />
-                  </IconButton>
-                </Tooltip>
-                <Tooltip title="Crop" placement="left">
-                  <IconButton sx={{ color: "white" }}>
-                    <CropIcon />
-                  </IconButton>
-                </Tooltip>
-                <Tooltip title="Rotate" placement="left">
-                  <IconButton sx={{ color: "white" }}>
-                    <RefreshIcon />
-                  </IconButton>
-                </Tooltip>
-                <Tooltip title="Flip Horizontal" placement="left">
-                  <IconButton sx={{ color: "white" }}>
-                    <FlipIcon />
-                  </IconButton>
-                </Tooltip>
-                <Tooltip title="Flip Vertical" placement="left">
-                  <IconButton
-                    sx={{ color: "white", transform: "rotate(90deg)" }}
-                  >
-                    <FlipIcon />
-                  </IconButton>
-                </Tooltip>
-                <Tooltip title="Replace" placement="left">
-                  <IconButton sx={{ color: "white" }}>
-                    <FindReplaceIcon />
-                  </IconButton>
-                </Tooltip>
-              </Box>
+              <EditIcons
+                onCloseEditIcons={handleCloseEditIcons}
+                onCropImage={handleCropImage}
+                onRotate={handleRotate}
+                onFlipHorizontal={handleFlipHorizontal}
+                onFlipVertical={handleFlipVertical}
+                onReplace={handleReplace}
+              />
             )}
           </Box>
         )}
-
         <Box
           sx={{
             flex: "0.5",
@@ -183,9 +179,9 @@ const ImageDrawer = ({
           <TextField
             label="Asset Title"
             value={assetTitle}
+            onChange={(e) => setAssetTitle(e.target.value)}
             fullWidth
             variant="outlined"
-            sx={{ marginBottom: "16px" }}
           />
           <TextField
             label="Enter Description"
@@ -193,17 +189,15 @@ const ImageDrawer = ({
             rows={3}
             fullWidth
             variant="outlined"
-            sx={{ marginBottom: "16px" }}
           />
           <Button
             variant="contained"
+            onClick={onClose}
             sx={{
               backgroundColor: "#334D6E",
               color: "#fff",
               width: "100%",
-              cursor: "pointer",
             }}
-            onClick={onClose}
           >
             Upload Image
           </Button>

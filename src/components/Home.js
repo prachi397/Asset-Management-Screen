@@ -8,6 +8,7 @@ const Home = () => {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [uploadedImageTitle, setUploadedImageTitle] = useState("");
 
+  //function to upload an image after clicking on add button
   const handleImageUpload = (event) => {
     const file = event.target.files[0];
     if (file) {

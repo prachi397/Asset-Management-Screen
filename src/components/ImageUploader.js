@@ -1,17 +1,16 @@
-import React, { useState } from "react";
+import React from "react";
 import foloderImg from "../assets/folderImg.png";
 import { Box, Button, Typography } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 
-const ImageUploader = ({onUpload}) => {
-    
+const ImageUploader = ({ onUpload }) => {
   return (
     <Box
       sx={{
         display: "flex",
         flexDirection: "column",
         justifyContent: "center",
-        gap:"10px",
+        gap: "10px",
         alignItems: "center",
         height: "100vh",
       }}
