@@ -11,26 +11,36 @@ import { Close as CloseIcon, Edit as EditIcon } from "@mui/icons-material";
 import EditIcons from "./EditIcons";
 import Cropper from "react-easy-crop";
 
-const ImageDrawer = ({ uploadedImage, uploadedImageTitle, drawerOpen, onClose }) => {
+const ImageDrawer = ({
+  uploadedImage,
+  uploadedImageTitle,
+  drawerOpen,
+  onClose,
+  onReplace,
+  handleCropImage,
+  handleRotate,
+  rotation,
+  handleFlipHorizontal,
+  flipHorizontal,
+  handleFlipVertical,
+  flipVertical,
+}) => {
   const [assetTitle, setAssetTitle] = useState(uploadedImageTitle || "");
   const [isEditMode, setIsEditMode] = useState(false);
-  const [crop, setCrop] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
   const [isCropping, setIsCropping] = useState(false);
-  const [imageSrc, setImageSrc] = useState(uploadedImage); 
-  const [rotation, setRotation] = useState(0);
-  const [flipHorizontal, setFlipHorizontal] = useState(false); 
-  const [flipVertical, setFlipVertical] = useState(false); 
+  const [imageSrc, setImageSrc] = useState(uploadedImage);
 
-  //useEffect when the title of the image changes to set the new title
-  useEffect(() => {
-    setAssetTitle(uploadedImageTitle);
-  }, [uploadedImageTitle]);
 
-  // when the image changes to set the new image
+  const [src, setSrc] = useState(null);
+  const [crop, setCrop] = useState({ aspect: 16 / 9 }); 
+  const [croppedImageUrl, setCroppedImageUrl] = useState(null);
+
+  //useEffect when the image changes to set the new values of image
   useEffect(() => {
     setImageSrc(uploadedImage);
-  }, [uploadedImage]);
+    setAssetTitle(uploadedImageTitle);
+  }, [uploadedImage, uploadedImageTitle]);
 
   //function runs when user clicks on edit icon
   const handleEditClick = () => setIsEditMode(true);
@@ -41,28 +51,20 @@ const ImageDrawer = ({ uploadedImage, uploadedImageTitle, drawerOpen, onClose })
     setIsEditMode(false);
   };
 
-  //function to crop the image
-  const handleCropImage = async () => {
-    
-  };
-
-  const handleRotate = () => {
-    setRotation((prevRotation) => prevRotation + 90); 
-  };
-
-  //function to flip the image horizontaly
-  const handleFlipHorizontal = () => {
-    setFlipHorizontal(!flipHorizontal); 
-  };
-
-  //function to flip image vertically
-  const handleFlipVertical = () => {
-    setFlipVertical(!flipVertical); 
-  };
-
   //function to replace image
   const handleReplace = () => {
-    // document.getElementById('fileInput').click();
+    const fileInput = document.createElement("input");
+    fileInput.type = "file";
+    fileInput.accept = "image/*";
+    fileInput.onchange = (event) => {
+      const file = event.target.files[0];
+      if (file) {
+        const newImageURL = URL.createObjectURL(file);
+        const newImageTitle = file.name;  
+        onReplace(newImageURL, newImageTitle);  
+      }
+    };
+    fileInput.click();
   };
 
   return (
@@ -78,7 +80,6 @@ const ImageDrawer = ({ uploadedImage, uploadedImageTitle, drawerOpen, onClose })
         },
       }}
     >
-      {/* Header */}
       <Box
         sx={{
           display: "flex",
@@ -122,7 +123,9 @@ const ImageDrawer = ({ uploadedImage, uploadedImageTitle, drawerOpen, onClose })
                   width: "100%",
                   height: "100%",
                   objectFit: "contain",
-                  transform: `${flipHorizontal ? "scaleX(-1)" : ""} ${flipVertical ? "scaleY(-1)" : ""} rotate(${rotation}deg)`,
+                  transform: `${flipHorizontal ? "scaleX(-1)" : ""} ${
+                    flipVertical ? "scaleY(-1)" : ""
+                  } rotate(${rotation}deg)`,
                 }}
               />
             ) : (
