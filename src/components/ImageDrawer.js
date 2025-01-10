@@ -10,10 +10,14 @@ import {
 import { Close as CloseIcon, Edit as EditIcon } from "@mui/icons-material";
 import EditIcons from "./EditIcons";
 import Cropper from "react-easy-crop";
+import { useNavigate } from "react-router-dom";
+import { Snackbar, Alert } from "@mui/material";
 
 const ImageDrawer = ({
   uploadedImage,
   uploadedImageTitle,
+  description,
+  setDescription,
   drawerOpen,
   onClose,
   onReplace,
@@ -23,35 +27,41 @@ const ImageDrawer = ({
   handleFlipHorizontal,
   flipHorizontal,
   handleFlipVertical,
+  isCropping,
+  crop,
+  setCrop,
+  croppedArea,
+  handleCropComplete,
+  generateCroppedImage,
+  setIsCropping,
   flipVertical,
+  handleSaveImageToList,
 }) => {
+  const navigate = useNavigate();
+
   const [assetTitle, setAssetTitle] = useState(uploadedImageTitle || "");
   const [isEditMode, setIsEditMode] = useState(false);
   const [zoom, setZoom] = useState(1);
-  const [isCropping, setIsCropping] = useState(false);
   const [imageSrc, setImageSrc] = useState(uploadedImage);
 
+  const [openSnackbar, setOpenSnackbar] = useState(false);
 
-  const [src, setSrc] = useState(null);
-  const [crop, setCrop] = useState({ aspect: 16 / 9 }); 
-  const [croppedImageUrl, setCroppedImageUrl] = useState(null);
-
-  //useEffect when the image changes to set the new values of image
+  // UseEffect to reset title and image when the image changes
   useEffect(() => {
     setImageSrc(uploadedImage);
     setAssetTitle(uploadedImageTitle);
   }, [uploadedImage, uploadedImageTitle]);
 
-  //function runs when user clicks on edit icon
+  // Function to toggle edit mode
   const handleEditClick = () => setIsEditMode(true);
 
-  //flip the icons after clicking on close button
+  // Function to close edit mode
   const handleCloseEditIcons = () => {
     setIsCropping(false);
     setIsEditMode(false);
   };
 
-  //function to replace image
+  // Function to replace image
   const handleReplace = () => {
     const fileInput = document.createElement("input");
     fileInput.type = "file";
@@ -60,11 +70,26 @@ const ImageDrawer = ({
       const file = event.target.files[0];
       if (file) {
         const newImageURL = URL.createObjectURL(file);
-        const newImageTitle = file.name;  
-        onReplace(newImageURL, newImageTitle);  
+        const newImageTitle = file.name;
+        onReplace(newImageURL, newImageTitle);
       }
     };
     fileInput.click();
+  };
+
+  //function runs when user clicks on upload image button
+  const handleImageUpload = async () => {
+    if (!description) {
+      setOpenSnackbar(true);
+      return;
+    }
+    let processedImage = imageSrc;
+    if (isCropping || rotation !== 0 || flipHorizontal || flipVertical) {
+      processedImage = await generateCroppedImage();
+    }
+    handleSaveImageToList(processedImage, uploadedImageTitle, description);
+    onClose();
+    navigate("/gallery");
   };
 
   return (
@@ -101,18 +126,22 @@ const ImageDrawer = ({
           display: "flex",
           flexDirection: { xs: "column", sm: "row" },
           gap: "16px",
+          height: "70%",
         }}
       >
         {imageSrc && (
           <Box
             sx={{
               flex: "1",
-              maxWidth: "70%",
-              maxHeight: "500px",
               position: "relative",
               overflow: "hidden",
               borderRadius: "8px",
               border: "1px solid #ccc",
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              width: "100%",
+              height: "500px",
             }}
           >
             {!isCropping ? (
@@ -122,7 +151,7 @@ const ImageDrawer = ({
                 style={{
                   width: "100%",
                   height: "100%",
-                  objectFit: "contain",
+                  objectFit: "cover",
                   transform: `${flipHorizontal ? "scaleX(-1)" : ""} ${
                     flipVertical ? "scaleY(-1)" : ""
                   } rotate(${rotation}deg)`,
@@ -134,9 +163,21 @@ const ImageDrawer = ({
                 crop={crop}
                 zoom={zoom}
                 rotation={rotation}
-                aspect={1}
+                aspect={16 / 9}
                 onCropChange={setCrop}
+                onCropComplete={handleCropComplete}
                 onZoomChange={setZoom}
+                style={{
+                  containerStyle: {
+                    width: "100%",
+                    height: "100%",
+                    position: "relative",
+                  },
+                  cropAreaStyle: {
+                    width: "100%",
+                    height: "100%",
+                  },
+                }}
               />
             )}
 
@@ -188,6 +229,8 @@ const ImageDrawer = ({
           />
           <TextField
             label="Enter Description"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
             multiline
             rows={3}
             fullWidth
@@ -195,7 +238,7 @@ const ImageDrawer = ({
           />
           <Button
             variant="contained"
-            onClick={onClose}
+            onClick={handleImageUpload}
             sx={{
               backgroundColor: "#334D6E",
               color: "#fff",
@@ -204,6 +247,15 @@ const ImageDrawer = ({
           >
             Upload Image
           </Button>
+          <Snackbar
+            open={openSnackbar}
+            autoHideDuration={3000}
+            onClose={() => setOpenSnackbar(false)}
+          >
+            <Alert onClose={() => setOpenSnackbar(false)} severity="error">
+              Description is mandatory!
+            </Alert>
+          </Snackbar>
         </Box>
       </Box>
     </Drawer>

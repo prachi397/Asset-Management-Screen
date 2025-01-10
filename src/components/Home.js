@@ -1,16 +1,23 @@
 import React, { useState } from "react";
 import ImageUploader from "./ImageUploader";
 import ImageDrawer from "./ImageDrawer";
+import { useNavigate } from "react-router-dom";
 
-const Home = () => {
+const Home = ({ setImageList, imageList }) => {
   const [uploadedImage, setUploadedImage] = useState(null);
-  const [imageList, setImageList] = useState([]);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [uploadedImageTitle, setUploadedImageTitle] = useState("");
+  const [description, setDescription] = useState("");
 
   const [rotation, setRotation] = useState(0);
   const [flipHorizontal, setFlipHorizontal] = useState(false);
   const [flipVertical, setFlipVertical] = useState(false);
+
+  const [isCropping, setIsCropping] = useState(false);
+  const [crop, setCrop] = useState({ x: 0, y: 0 });
+  const [croppedArea, setCroppedArea] = useState(null);
+
+  const navigate = useNavigate();
 
   //function to upload an image after clicking on add button
   const handleImageUpload = (event) => {
@@ -30,12 +37,19 @@ const Home = () => {
     setUploadedImageTitle(newTitle);
     setFlipHorizontal(false);
     setFlipVertical(false);
+    setIsCropping(false);
     setRotation(0);
   };
 
   //function to crop the image
-  const handleCropImage = async () => {};
+  const handleCropImage = async () => {
+    setIsCropping(true);
+  };
 
+  const handleCropComplete = () => {};
+  const generateCroppedImage = () => {};
+
+  //function to rotate the image
   const handleRotate = () => {
     setRotation((prevRotation) => prevRotation + 90);
   };
@@ -50,6 +64,20 @@ const Home = () => {
     setFlipVertical(!flipVertical);
   };
 
+ // Save the uploaded image and navigate to the gallery
+const handleSaveImageToList = (imageURL, imageTitle, description) => {
+  const newImage = {
+    id: Date.now(), 
+    url: imageURL,
+    title: imageTitle,
+    description: description,
+    date: new Date(), 
+  }; 
+  setImageList((prevList) => [...prevList, newImage]);
+  setDrawerOpen(false);
+  navigate("/gallery");
+};
+
   // function to close the drawer
   const handleCloseDrawer = () => {
     setDrawerOpen(false);
@@ -57,9 +85,9 @@ const Home = () => {
     setUploadedImageTitle("");
     setFlipHorizontal(false);
     setFlipVertical(false);
+    setIsCropping(false);
     setRotation(0);
   };
-
   return (
     <div>
       <ImageUploader onUpload={handleImageUpload} />
@@ -70,12 +98,22 @@ const Home = () => {
         onClose={handleCloseDrawer}
         onReplace={handleReplaceImage}
         handleCropImage={handleCropImage}
+        isCropping={isCropping}
+        crop={crop}
+        setCrop={setCrop}
+        croppedArea={croppedArea}
+        handleCropComplete={handleCropComplete}
+        generateCroppedImage={generateCroppedImage}
+        setIsCropping={setIsCropping}
         handleRotate={handleRotate}
         rotation={rotation}
         handleFlipHorizontal={handleFlipHorizontal}
         flipHorizontal={flipHorizontal}
         handleFlipVertical={handleFlipVertical}
         flipVertical={flipVertical}
+        handleSaveImageToList={handleSaveImageToList}
+        description={description}
+        setDescription={setDescription}
       />
     </div>
   );
