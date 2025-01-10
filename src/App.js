@@ -4,7 +4,7 @@ import Gallery from "./components/Gallery";
 import Home from "./components/Home";
 
 const App = () => {
-  const [imageList, setImageList] = useState([]); // Lift imageList state to App
+  const [imageList, setImageList] = useState([]); 
 
   return (
       <Routes>

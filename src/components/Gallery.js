@@ -16,6 +16,7 @@ import SearchIcon from "@mui/icons-material/Search";
 import { useNavigate } from "react-router-dom";
 
 const Gallery = ({ imageList }) => {
+    console.log(imageList)
   const navigate = useNavigate();
 
   const [searchQuery, setSearchQuery] = useState("");

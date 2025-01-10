@@ -30,9 +30,10 @@ const ImageDrawer = ({
   isCropping,
   crop,
   setCrop,
-  croppedArea,
   handleCropComplete,
   generateCroppedImage,
+  zoom,
+  setZoom,
   setIsCropping,
   flipVertical,
   handleSaveImageToList,
@@ -41,7 +42,6 @@ const ImageDrawer = ({
 
   const [assetTitle, setAssetTitle] = useState(uploadedImageTitle || "");
   const [isEditMode, setIsEditMode] = useState(false);
-  const [zoom, setZoom] = useState(1);
   const [imageSrc, setImageSrc] = useState(uploadedImage);
 
   const [openSnackbar, setOpenSnackbar] = useState(false);
@@ -61,6 +61,41 @@ const ImageDrawer = ({
     setIsEditMode(false);
   };
 
+  //transforming the image based on user actions and save it into imageList
+  const generateTransformedImage = async () => {
+    const canvas = document.createElement("canvas");
+    const ctx = canvas.getContext("2d");
+    const img = new Image();
+    img.src = imageSrc;  
+    return new Promise((resolve, reject) => {
+      img.onload = () => {
+        canvas.width = img.width;
+        canvas.height = img.height;
+        ctx.save();
+        ctx.translate(canvas.width / 2, canvas.height / 2);
+        ctx.rotate((rotation * Math.PI) / 180);
+        ctx.translate(-canvas.width / 2, -canvas.height / 2);
+        if (flipHorizontal) {
+          ctx.scale(-1, 1); 
+          ctx.translate(-canvas.width, 0); 
+        }
+  
+        if (flipVertical) {
+          ctx.scale(1, -1); 
+          ctx.translate(0, -canvas.height);
+        }
+        ctx.drawImage(img, 0, 0);
+        const newImageURL = canvas.toDataURL("image/jpeg");
+        resolve(newImageURL);
+  
+        ctx.restore();
+      };
+  
+      img.onerror = (err) => reject(err);
+    });
+  };
+  
+
   // Function to replace image
   const handleReplace = () => {
     const fileInput = document.createElement("input");
@@ -77,21 +112,23 @@ const ImageDrawer = ({
     fileInput.click();
   };
 
-  //function runs when user clicks on upload image button
   const handleImageUpload = async () => {
     if (!description) {
-      setOpenSnackbar(true);
+      setOpenSnackbar(true); 
       return;
-    }
-    let processedImage = imageSrc;
-    if (isCropping || rotation !== 0 || flipHorizontal || flipVertical) {
-      processedImage = await generateCroppedImage();
+    }  
+    let processedImage = imageSrc;  
+    if (isCropping) {
+      processedImage = await generateCroppedImage(); 
+    } else if (rotation !== 0 || flipHorizontal || flipVertical) {
+      processedImage = await generateTransformedImage(); 
     }
     handleSaveImageToList(processedImage, uploadedImageTitle, description);
     onClose();
     navigate("/gallery");
   };
-
+  
+  
   return (
     <Drawer
       open={drawerOpen}

@@ -15,6 +15,7 @@ const Home = ({ setImageList, imageList }) => {
 
   const [isCropping, setIsCropping] = useState(false);
   const [crop, setCrop] = useState({ x: 0, y: 0 });
+  const [zoom, setZoom] = useState(1);
   const [croppedArea, setCroppedArea] = useState(null);
 
   const navigate = useNavigate();
@@ -46,8 +47,44 @@ const Home = ({ setImageList, imageList }) => {
     setIsCropping(true);
   };
 
-  const handleCropComplete = () => {};
-  const generateCroppedImage = () => {};
+  const handleCropComplete = (croppedAreaPercentage, croppedAreaPixels) => {
+    setCroppedArea(croppedAreaPixels);
+  };
+
+  //crop the image
+  const generateCroppedImage = async () => {
+    const canvas = document.createElement("canvas");
+    const ctx = canvas.getContext("2d");
+    const img = new Image();
+    img.src = uploadedImage;
+    return new Promise((resolve, reject) => {
+      img.onload = () => {
+        canvas.width = croppedArea.width; 
+        canvas.height = croppedArea.height; 
+        ctx.save();
+        ctx.translate(-croppedArea.x, -croppedArea.y); 
+        ctx.translate(canvas.width / 2, canvas.height / 2);
+        ctx.rotate((rotation * Math.PI) / 180);
+        ctx.translate(-canvas.width / 2, -canvas.height / 2);
+        if (flipHorizontal) {
+          ctx.scale(-1, 1); 
+          ctx.translate(-canvas.width, 0); 
+        }
+        if (flipVertical) {
+          ctx.scale(1, -1);
+          ctx.translate(0, -canvas.height); 
+        }
+
+        ctx.drawImage(img, 0, 0, img.width, img.height);
+        // Extract the cropped portion
+        const croppedImageData = canvas.toDataURL("image/jpeg");
+        ctx.restore();
+        resolve(croppedImageData);
+      };
+
+      img.onerror = (err) => reject(err);
+    });
+  };
 
   //function to rotate the image
   const handleRotate = () => {
@@ -61,22 +98,23 @@ const Home = ({ setImageList, imageList }) => {
 
   //function to flip image vertically
   const handleFlipVertical = () => {
-    setFlipVertical(!flipVertical);
+    const newFlipVertical = !flipVertical;
+    setFlipVertical(newFlipVertical);
   };
 
- // Save the uploaded image and navigate to the gallery
-const handleSaveImageToList = (imageURL, imageTitle, description) => {
-  const newImage = {
-    id: Date.now(), 
-    url: imageURL,
-    title: imageTitle,
-    description: description,
-    date: new Date(), 
-  }; 
-  setImageList((prevList) => [...prevList, newImage]);
-  setDrawerOpen(false);
-  navigate("/gallery");
-};
+  // Save the uploaded image and navigate to the gallery
+  const handleSaveImageToList = (imageURL, imageTitle, description) => {
+    const newImage = {
+      id: Date.now(),
+      url: imageURL,
+      title: imageTitle,
+      description: description,
+      date: new Date(),
+    };
+    setImageList((prevList) => [...prevList, newImage]);
+    setDrawerOpen(false);
+    navigate("/gallery");
+  };
 
   // function to close the drawer
   const handleCloseDrawer = () => {
@@ -101,7 +139,8 @@ const handleSaveImageToList = (imageURL, imageTitle, description) => {
         isCropping={isCropping}
         crop={crop}
         setCrop={setCrop}
-        croppedArea={croppedArea}
+        zoom={zoom}
+        setZoom={setZoom}
         handleCropComplete={handleCropComplete}
         generateCroppedImage={generateCroppedImage}
         setIsCropping={setIsCropping}
